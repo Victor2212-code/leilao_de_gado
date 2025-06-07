@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white text-center">
+                    <h3>💳 Finalizar Compra</h3>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-center mb-4">Complete o pagamento para garantir sua compra.</h5>
+
+                    <!-- Resumo do pedido -->
+                    <div class="border rounded p-3 mb-4">
+                        <h5 class="text-primary">📜 Detalhes da Compra</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item"><strong>🐄 Animal:</strong> {{ animal.nome }}</li>
+                            <li class="list-group-item">
+                                <strong>🏆 Lance Vencedor:</strong> 
+                                {% if lance %} R$ {{ lance.valor|floatformat:2 }} {% else %} ❌ Nenhum lance aprovado {% endif %}
+                            </li>                            
+                            <li class="list-group-item">
+                                <strong>👤 Comprador:</strong> 
+                                {% if lance and lance.comprador %} {{ lance.comprador.username }} {% else %} ❌ Nenhum comprador {% endif %}
+                            </li>                            
+                        </ul>
+                    </div>
+                    <!-- Escolha do Entregador -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">🚚 Escolha um Entregador</h5>
+                        <select class="form-select" id="selecionar-entregador">
+                            <option value="" disabled selected>Selecione um entregador</option>
+                            {% for entregador in entregadores %}
+                                <option value="{{ entregador.id }}" 
+                                        data-preco="{{ entregador.valor }}" 
+                                        data-tipo="{{ entregador.tipo_preco }}">
+                                    {{ entregador.nome }} - Placa: {{ entregador.placa }} - {{ entregador.valor }} R$ por {{ entregador.get_tipo_preco_display }}
+                                </option>
+                            {% empty %}
+                                <option disabled>Nenhum entregador disponível</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    
+                    
+
+
+                    <!-- Escolha do método de pagamento -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">💰 Escolha um método de pagamento</h5>
+                        <select class="form-select" id="metodo-pagamento">
+                            <option value="" disabled selected>Selecione um método</option>
+                            <option value="pix">📲 PIX</option>
+                            <option value="cartao">💳 Cartão de Crédito</option>
+                            <option value="boleto">🧾 Boleto Bancário</option>
+                        </select>
+                    </div>
+
+                    <!-- Botão de Pagamento -->
+                    <button class="btn btn-success w-100 fw-bold py-2 shadow" id="btn-pagar" disabled>
+                        ✅ Confirmar Pagamento
+                    </button>
+
+                    <p class="text-center text-muted mt-3">🔒 Pagamento seguro e criptografado.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAIS DE PAGAMENTO -->
+<!-- PIX -->
+<div class="modal fade" id="pixModal" tabindex="-1" aria-labelledby="pixModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">📲 Pagamento via PIX</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Escaneie o QR Code abaixo para realizar o pagamento.</p>
+                <img id="qrcode-pix" src="{% url 'pagamentos:gerar_qrcode' %}" alt="QR Code PIX" class="img-fluid">
+                <p class="mt-3 text-muted">Após o pagamento, sua compra será confirmada automaticamente.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- CARTÃO DE CRÉDITO -->
+<div class="modal fade" id="cartaoModal" tabindex="-1" aria-labelledby="cartaoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">💳 Pagamento com Cartão de Crédito</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cartao-form">
+                    <div class="mb-3">
+                        <label class="form-label">Nome no Cartão</label>
+                        <input type="text" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Número do Cartão</label>
+                        <input type="text" class="form-control" placeholder="XXXX XXXX XXXX XXXX" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Validade</label>
+                            <input type="text" class="form-control" placeholder="MM/AA" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">CVV</label>
+                            <input type="text" class="form-control" placeholder="XXX" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-3">💳 Pagar com Cartão</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BOLETO -->
+<div class="modal fade" id="boletoModal" tabindex="-1" aria-labelledby="boletoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">🧾 Pagamento via Boleto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Seu boleto foi gerado! Utilize o código abaixo para pagamento:</p>
+                <div class="border p-3 bg-light">
+                    <strong>23791.11123 60000.123456 71000.123456 5 123456789000</strong>
+                </div>
+                <p class="mt-3 text-muted">O processamento pode levar até 2 dias úteis.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("metodo-pagamento").addEventListener("change", function () {
+        document.getElementById("btn-pagar").disabled = false;
+    });
+
+    document.getElementById("btn-pagar").addEventListener("click", function () {
+        let metodo = document.getElementById("metodo-pagamento").value;
+        
+        console.log("Método de pagamento selecionado:", metodo); // Debug para verificar a seleção
+
+        if (!metodo) {
+            alert("⚠️ Selecione um método de pagamento antes de continuar.");
+            return;
+        }
+
+        let modalId = "";
+        if (metodo === "pix") {
+            modalId = "pixModal";
+        } else if (metodo === "cartao") {
+            modalId = "cartaoModal";
+        } else if (metodo === "boleto") {
+            modalId = "boletoModal";
+        }
+
+        if (modalId) {
+            let modal = new bootstrap.Modal(document.getElementById(modalId));
+            modal.show();
+        }
+    });
+
+    document.getElementById("cartao-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        alert("✅ Pagamento com cartão confirmado!");
+        window.location.href = "/";
+    });
+
+    document.getElementById("selecionar-entregador").addEventListener("change", function () {
+        let option = this.options[this.selectedIndex];
+        let tipoPreco = option.getAttribute("data-tipo");
+        let valor = parseFloat(option.getAttribute("data-preco"));
+        let precoEntrega = 0;
+
+        if (tipoPreco === "km") {
+            let distancia = prompt("Digite a distância em km:");
+            precoEntrega = distancia * valor;
+        } else if (tipoPreco === "kg") {
+            let peso = prompt("Digite o peso do animal em kg:");
+            precoEntrega = peso * valor;
+        }
+
+        alert(`O preço da entrega será R$ ${precoEntrega.toFixed(2)}`);
+    });
+</script>
+
+{% endblock %}

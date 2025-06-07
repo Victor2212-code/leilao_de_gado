@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center text-primary fw-bold mb-4">📊 Relatórios e Estatísticas</h2>
+
+    <!-- Cartões Resumo -->
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-info text-center p-3">
+                <div class="text-info fs-2"><i class="fa-solid fa-users"></i></div>
+                <h5 class="mt-2">Total de Usuários</h5>
+                <h3 class="fw-bold text-info">{{ total_usuarios }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-primary text-center p-3">
+                <div class="text-primary fs-2"><i class="fa-solid fa-cow"></i></div>
+                <h5 class="mt-2">Animais Cadastrados</h5>
+                <h3 class="fw-bold text-primary">{{ total_animais }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-success text-center p-3">
+                <div class="text-success fs-2"><i class="fa-solid fa-gavel"></i></div>
+                <h5 class="mt-2">Total de Lances</h5>
+                <h3 class="fw-bold text-success">{{ total_lances }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-danger text-center p-3">
+                <div class="text-danger fs-2"><i class="fa-solid fa-coins"></i></div>
+                <h5 class="mt-2">Faturamento Total</h5>
+                <h3 class="fw-bold text-danger">R$ {{ total_faturamento|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela: Usuários -->
+    <section class="mt-5">
+        <h3 class="text-primary">👥 Usuários Cadastrados</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle shadow-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Email</th>
+                        <th>Tipo</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                        <tr>
+                            <td>{{ usuario.username }}</td>
+                            <td>{{ usuario.email }}</td>
+                            <td>{{ usuario.tipo_usuario }}</td>
+                            <td>
+                                <span class="badge {% if usuario.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ usuario.is_active|yesno:"Ativo,Banido" }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Nenhum usuário cadastrado.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Tabela: Animais -->
+    <section class="mt-5">
+        <h3 class="text-primary">🐂 Animais Cadastrados</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle shadow-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Raça</th>
+                        <th>Idade</th>
+                        <th>Peso</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for animal in animais %}
+                        <tr>
+                            <td>{{ animal.nome }}</td>
+                            <td>{{ animal.raca }}</td>
+                            <td>{{ animal.idade }} anos</td>
+                            <td>{{ animal.peso }} kg</td>
+                            <td>
+                                <span class="badge {% if animal.status == 'Vendido' %}bg-danger{% else %}bg-success{% endif %}">
+                                    {{ animal.status }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Nenhum animal cadastrado.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Tabela: Lances -->
+    <section class="mt-5">
+        <h3 class="text-primary">🏆 Lances Realizados</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle shadow-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Comprador</th>
+                        <th>Animal</th>
+                        <th>Valor do Lance</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lance in lances %}
+                        <tr>
+                            <td>{{ lance.comprador.username }}</td>
+                            <td>{{ lance.animal.nome }}</td>
+                            <td>R$ {{ lance.valor|floatformat:2 }}</td>
+                            <td>{{ lance.data_hora }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Nenhum lance realizado.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Tabela: Faturamento -->
+    <section class="mt-5">
+        <h3 class="text-primary">💰 Origem do Faturamento</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle shadow-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Vendedor</th>
+                        <th>Animal Vendido</th>
+                        <th>Valor da Venda</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venda in faturamento %}
+                        <tr>
+                            <td>{{ venda.vendedor.username }}</td>
+                            <td>{{ venda.animal.nome }}</td>
+                            <td>R$ {{ venda.valor|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">Nenhuma venda registrada.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Gráficos -->
+    <section class="mt-5 row">
+        <div class="col-md-6 mb-4">
+            <h5 class="text-center text-secondary">👥 Atividade por Usuário</h5>
+            <canvas id="usuariosAtivos" height="150"></canvas>
+        </div>
+        <div class="col-md-6 mb-4">
+            <h5 class="text-center text-secondary">💸 Vendas por Vendedor</h5>
+            <canvas id="vendasVendedor" height="150"></canvas>
+        </div>
+    </section>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var ctx1 = document.getElementById("usuariosAtivos").getContext("2d");
+        var ctx2 = document.getElementById("vendasVendedor").getContext("2d");
+
+        new Chart(ctx1, {
+            type: "bar",
+            data: {
+                labels: {{ usuarios_ativos_labels|safe }},
+                datasets: [{
+                    label: "Ações Realizadas",
+                    data: {{ usuarios_ativos_data|safe }},
+                    backgroundColor: "rgba(0, 123, 255, 0.7)",
+                    borderColor: "#007bff",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        new Chart(ctx2, {
+            type: "bar",
+            data: {
+                labels: {{ vendedores_labels|safe }},
+                datasets: [{
+                    label: "Total Vendido (R$)",
+                    data: {{ vendedores_data|safe }},
+                    backgroundColor: "rgba(40, 167, 69, 0.7)",
+                    borderColor: "#28a745",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

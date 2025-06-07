@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row gx-4 gy-3">
+        <!-- SIDEBAR COM BUSCA E USUÁRIOS -->
+        <div class="col-lg-3 col-md-4">
+            <div class="bg-dark text-white rounded-4 p-3 shadow-sm" style="height: 80vh; overflow-y: auto;">
+                <h4 class="text-center mb-3">💬 Conversas</h4>
+
+                <!-- Campo de Busca -->
+                <div class="position-relative">
+                    <input type="text" id="pesquisaUsuario" class="form-control mb-2" placeholder="🔎 Pesquise com @usuario..." autocomplete="off">
+                    <div id="sugestoes" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Lista de usuários -->
+                <ul class="list-group mt-2" id="listaUsuarios">
+                    {% for usuario in usuarios %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-2 
+                            {% if usuario == usuario_selecionado %} bg-primary text-white {% endif %}">
+                            <a href="{% url 'chat:chat_usuario' usuario.id %}" 
+                               class="d-flex align-items-center text-decoration-none {% if usuario == usuario_selecionado %} text-white {% else %} text-dark {% endif %}">
+                                <i class="fa-solid fa-user me-2"></i> 
+                                <span class="nome-usuario">@{{ usuario.username }}</span>
+                            </a>
+                            <a href="{% url 'chat:chat_usuario' usuario.id %}" 
+                               class="btn btn-sm btn-outline-light" title="Abrir Chat">
+                                <i class="fa-regular fa-paper-plane"></i>
+                            </a>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-muted text-center">Nenhum usuário encontrado.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- ÁREA DE MENSAGENS -->
+        <div class="col-lg-9 col-md-8">
+            <div class="card shadow-sm h-100 d-flex flex-column" style="height: 80vh;">
+                <div class="card-header bg-primary text-white fw-semibold">
+                    Conversa com <i class="fa-solid fa-user ms-1"></i> {{ usuario_selecionado.username }}
+                </div>
+
+                <div class="card-body overflow-auto" id="chat-box">
+                    {% for msg in mensagens %}
+                        <div class="d-flex {% if msg.remetente == user %} justify-content-end {% else %} justify-content-start {% endif %} mb-2">
+                            <div class="p-3 rounded shadow-sm text-white {% if msg.remetente == user %} bg-success {% else %} bg-secondary {% endif %}">
+                                <div class="fw-bold">{{ msg.remetente.username }}</div>
+                                <div>{{ msg.conteudo }}</div>
+                                <div class="text-end text-light small mt-1">{{ msg.data_envio|time:"H:i" }}</div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-center text-muted">Nenhuma mensagem nesta conversa ainda.</p>
+                    {% endfor %}
+                </div>
+
+                <div class="card-footer bg-light">
+                    <form id="chat-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" id="mensagem" class="form-control shadow-sm" placeholder="Digite sua mensagem..." required>
+                            <button type="submit" class="btn btn-primary shadow-sm">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const chatBox = document.getElementById("chat-box");
+    const form = document.getElementById("chat-form");
+    const mensagemInput = document.getElementById("mensagem");
+    const pesquisaInput = document.getElementById("pesquisaUsuario");
+    const sugestoes = document.getElementById("sugestoes");
+    const listaUsuarios = document.getElementById("listaUsuarios");
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Envio de mensagens
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const mensagem = mensagemInput.value;
+        const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+        const usuarioId = "{{ usuario_selecionado.id }}";
+
+        fetch(`/chat/enviar_mensagem/${usuarioId}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": csrfToken,
+            },
+            body: new URLSearchParams({ conteudo: mensagem }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert("❌ Erro ao enviar mensagem.");
+            } else {
+                const div = document.createElement("div");
+                div.classList.add("d-flex", "justify-content-end", "mb-2");
+                div.innerHTML = `
+                    <div class="p-3 rounded shadow-sm text-white bg-success">
+                        <div class="fw-bold">Você</div>
+                        <div>${data.conteudo}</div>
+                        <div class="text-end text-light small mt-1">${data.data_envio}</div>
+                    </div>`;
+                chatBox.appendChild(div);
+                chatBox.scrollTop = chatBox.scrollHeight;
+                mensagemInput.value = "";
+
+                // Adiciona usuário ao painel lateral se não estiver
+                const existe = Array.from(listaUsuarios.querySelectorAll("a span.nome-usuario"))
+                    .some(span => span.textContent.includes(data.destinatario));
+                if (!existe) {
+                    const novoItem = document.createElement("li");
+                    novoItem.className = "list-group-item d-flex justify-content-between align-items-center p-2";
+                    novoItem.innerHTML = `
+                        <a href="/chat/${usuarioId}/" class="d-flex align-items-center text-decoration-none text-dark">
+                            <i class="fa-solid fa-user me-2"></i> <span class="nome-usuario">@${data.destinatario}</span>
+                        </a>
+                        <a href="/chat/${usuarioId}/" class="btn btn-sm btn-outline-primary" title="Abrir Chat">
+                            <i class="fa-regular fa-paper-plane"></i>
+                        </a>
+                    `;
+                    listaUsuarios.prepend(novoItem);
+                }
+            }
+        })
+        .catch(error => {
+            console.error("Erro:", error);
+            alert("❌ Erro de conexão.");
+        });
+    });
+
+    // Busca dinâmica
+    pesquisaInput.addEventListener("input", function () {
+        const termo = this.value.toLowerCase().replace("@", "").trim();
+        if (termo.length === 0) {
+            sugestoes.innerHTML = "";
+            return;
+        }
+
+        fetch(`/chat/buscar/?q=${encodeURIComponent(termo)}`)
+            .then(res => res.json())
+            .then(data => {
+                sugestoes.innerHTML = "";
+                if (data.length > 0) {
+                    data.forEach(usuario => {
+                        const item = document.createElement("a");
+                        item.href = `/chat/${usuario.id}/`;
+                        item.className = "list-group-item list-group-item-action";
+                        item.innerHTML = `<i class="fa-solid fa-user me-2"></i> @${usuario.username}`;
+                        sugestoes.appendChild(item);
+                    });
+                } else {
+                    sugestoes.innerHTML = `<div class="list-group-item text-muted">Nenhum usuário encontrado.</div>`;
+                }
+            });
+    });
+
+    // Oculta sugestões ao clicar fora
+    document.addEventListener("click", function (e) {
+        if (!pesquisaInput.contains(e.target) && !sugestoes.contains(e.target)) {
+            sugestoes.innerHTML = "";
+        }
+    });
+});
+</script>
+
+<style>
+    #sugestoes a:hover {
+        background-color: #0d6efd;
+        color: white;
+    }
+    .list-group-item.bg-primary a {
+        color: white !important;
+    }
+</style>
+{% endblock %}

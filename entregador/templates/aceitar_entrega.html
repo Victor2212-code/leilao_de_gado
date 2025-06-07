@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-success text-center mb-4">✅ Aceitar Entregas Disponíveis</h2>
+    {% if entregas %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="list-group">
+                {% for entrega in entregas %}
+                    <label class="list-group-item">
+                        <input type="radio" name="entrega_id" value="{{ entrega.id }}" required>
+                        {{ entrega.destino }} - {{ entrega.status }}
+                    </label>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-success mt-3">Aceitar Entrega</button>
+        </form>
+    {% else %}
+        <div class="alert alert-warning text-center">Não há entregas disponíveis no momento.</div>
+    {% endif %}
+</div>
+{% endblock %}
