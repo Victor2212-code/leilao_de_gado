@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-primary fw-bold mb-4">🐂 Bem-vindo ao Leilão de Gado 🐂</h2>
+
+    <!-- Barra de Pesquisa com botão limpar -->
+    <div class="mb-4 position-relative">
+        <div class="input-group">
+            <input type="text" id="search-input" class="form-control border-primary" placeholder="🔍 Pesquise pelo nome do animal..." aria-label="Campo de pesquisa">
+            <button class="btn btn-outline-secondary" id="clear-search" type="button"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="search-results" class="list-group position-absolute w-100 border rounded shadow"
+             style="display: none; z-index: 1050; background-color: white; max-height: 200px; overflow-y: auto;">
+        </div>
+    </div>
+
+    <!-- Lista de Animais -->
+    <div class="row justify-content-center" id="animal-list">
+        {% for animal in animais %}
+            {% if animal.vendedor != request.user %}
+                <div class="col-md-4 col-sm-6 mb-4 animal-card"
+                     data-name="{{ animal.nome|lower }}"
+                     data-vendedor="{{ animal.vendedor.username }}">
+                    <div class="card shadow-sm position-relative border-0">
+
+                        <!-- Contador -->
+                        <div class="text-center fw-bold py-2 text-dark" style="background-color: #ffc107;">
+                            ⏳ Termina em: <span class="fw-bold">{{ animal.termino_leilao|date:"d/m/Y H:i" }}</span>
+                            <div id="countdown-{{ animal.id }}" class="fw-bold mt-1"></div>
+                        </div>
+
+                        <!-- Imagem -->
+                        <div class="overflow-hidden position-relative" style="width: 100%; height: 250px;">
+                            <img src="{{ animal.imagem.url|default:'/media/default_animal.jpg' }}"
+                                 onerror="this.src='/media/default_animal.jpg';"
+                                 class="card-img-top"
+                                 alt="Imagem do {{ animal.nome }}"
+                                 loading="lazy"
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-secondary">{{ animal.nome }} <br>
+                                <small class="text-muted">👤 {{ animal.vendedor.username }}</small>
+                            </h5>
+                            <p class="card-text"><strong>Raça:</strong> {{ animal.raca }}</p>
+                            <p class="card-text"><strong>Peso:</strong> {{ animal.peso }} kg</p>
+                            <p class="card-text"><strong>Idade:</strong> {{ animal.idade }} anos</p>
+                            <a href="{% url 'animal_detalhes' animal.id %}" class="btn btn-primary w-100">🔎 Ver Detalhes</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <p class="text-center text-secondary fw-bold">⚠ Nenhum animal cadastrado no momento.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("search-input");
+        const clearBtn = document.getElementById("clear-search");
+        const searchResults = document.getElementById("search-results");
+        const animalCards = document.querySelectorAll(".animal-card");
+
+        let debounceTimer;
+
+        searchInput.addEventListener("input", function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                let query = searchInput.value.trim().toLowerCase();
+                if (query.length === 0) {
+                    searchResults.innerHTML = "";
+                    searchResults.style.display = "none";
+                    animalCards.forEach(card => card.style.display = "block");
+                    return;
+                }
+
+                fetch(`/animais/buscar/?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = "";
+                        if (data.length > 0) {
+                            data.forEach(animal => {
+                                if (animal.vendedor !== "{{ request.user.username }}") {
+                                    const item = document.createElement("div");
+                                    item.className = "list-group-item d-flex justify-content-between align-items-center";
+
+                                    const info = document.createElement("span");
+                                    info.innerHTML = `<strong>${animal.nome}</strong> - ${animal.raca}`;
+
+                                    const btn = document.createElement("a");
+                                    btn.href = `/animais/animal/${animal.id}/`;
+                                    btn.className = "btn btn-info btn-sm";
+                                    btn.innerText = "Ver Detalhes";
+
+                                    item.appendChild(info);
+                                    item.appendChild(btn);
+                                    searchResults.appendChild(item);
+                                }
+                            });
+                            searchResults.style.display = "block";
+                        } else {
+                            searchResults.innerHTML = `<div class="list-group-item text-muted">Nenhum resultado encontrado</div>`;
+                            searchResults.style.display = "block";
+                        }
+                    })
+                    .catch(error => console.error("Erro ao buscar:", error));
+
+                animalCards.forEach(card => {
+                    const name = card.getAttribute("data-name");
+                    const vendedor = card.getAttribute("data-vendedor");
+                    card.style.display = name.includes(query) && vendedor !== "{{ request.user.username }}" ? "block" : "none";
+                });
+            }, 300);
+        });
+
+        clearBtn.addEventListener("click", function () {
+            searchInput.value = "";
+            searchInput.dispatchEvent(new Event("input"));
+        });
+
+        // Countdown
+        const animais = JSON.parse(`[ 
+            {% for animal in animais %}
+                {% if animal.termino_leilao %}
+                    {"id": "{{ animal.id }}", "termino_leilao": "{{ animal.termino_leilao|date:'Y-m-d H:i:s'|escapejs }}"}{% if not forloop.last %},{% endif %}
+                {% endif %}
+            {% endfor %}
+        ]`);
+
+        function iniciarContagemRegressiva(animal) {
+            const el = document.getElementById(`countdown-${animal.id}`);
+            if (!el) return;
+            const termino = new Date(animal.termino_leilao.replace(" ", "T")).getTime();
+
+            function atualizar() {
+                const agora = Date.now();
+                const diff = termino - agora;
+                if (diff <= 0) {
+                    el.innerHTML = "<span class='text-danger fw-bold'>🚨 Leilão Encerrado</span>";
+                    return;
+                }
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                el.innerHTML = `⏳ ${d}d ${h}h ${m}m ${s}s`;
+
+                if (diff <= 300000) el.classList.add("text-danger");
+            }
+
+            atualizar();
+            setInterval(atualizar, 1000);
+        }
+
+        animais.forEach(iniciarContagemRegressiva);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h2>Resultados da Pesquisa</h2>
+        {% if query %}
+            <p>Exibindo resultados para: <strong>{{ query }}</strong></p>
+        {% endif %}
+        
+        {% if animais %}
+            <ul class="list-group">
+                {% for animal in animais %}
+                    <li class="list-group-item">
+                        <strong>{{ animal.nome }}</strong> - Raça: {{ animal.raca }} - Idade: {{ animal.idade }} anos
+                        {% if animal.imagem %}
+                            <br><img src="{{ animal.imagem.url }}" alt="{{ animal.nome }}" width="100">
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Nenhum resultado encontrado.</p>
+        {% endif %}
+    </div>
+{% endblock %}

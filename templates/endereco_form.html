@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm p-4">
+        <h2 class="text-center text-primary fw-bold">
+            <i class="fas fa-map-marker-alt text-danger"></i> Atualizar Endereço
+        </h2>
+        <p class="text-center text-muted">Preencha os campos abaixo para atualizar seu endereço</p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="row g-3">
+                <!-- Linha 1 -->
+                <div class="col-md-4">
+                    <label class="fw-bold">CEP <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="cep" placeholder="00000-000" name="{{ form.cep.name }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold">Estado <span class="text-danger">*</span></label>
+                    {{ form.estado }}
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold">Cidade <span class="text-danger">*</span></label>
+                    {{ form.cidade }}
+                </div>
+
+                <!-- Linha 2 -->
+                <div class="col-md-6">
+                    <label class="fw-bold">Bairro <span class="text-danger">*</span></label>
+                    {{ form.bairro }}
+                </div>
+                <div class="col-md-6">
+                    <label class="fw-bold">Rua <span class="text-danger">*</span></label>
+                    {{ form.rua }}
+                </div>
+
+                <!-- Linha 3 -->
+                <div class="col-md-3">
+                    <label class="fw-bold">Número <span class="text-danger">*</span></label>
+                    {{ form.numero }}
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">Complemento</label>
+                    {{ form.complemento }}
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">Telefone <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="telefone" placeholder="(XX) XXXXX-XXXX" name="{{ form.telefone.name }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">CPF <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="cpf" placeholder="XXX.XXX.XXX-XX" name="{{ form.cpf.name }}" required>
+                </div>
+            </div>
+
+            <!-- Botão de Salvar -->
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg w-50">
+                    <i class="fas fa-save"></i> Salvar Endereço
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript para Máscaras -->
+<script>
+    function aplicarMascara(input, pattern) {
+        let value = input.value.replace(/\D/g, "");
+        let i = 0;
+        input.value = pattern.replace(/#/g, _ => value[i++] || "");
+    }
+
+    document.getElementById("cep").addEventListener("input", function () {
+        aplicarMascara(this, "#####-###");
+    });
+
+    document.getElementById("cpf").addEventListener("input", function () {
+        aplicarMascara(this, "###.###.###-##");
+    });
+
+    document.getElementById("telefone").addEventListener("input", function () {
+        aplicarMascara(this, "(##) #####-####");
+    });
+</script>
+{% endblock %}

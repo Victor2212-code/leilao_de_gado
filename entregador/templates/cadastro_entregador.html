@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center mt-5 mb-5">
+    <div class="card shadow-lg w-100" style="max-width: 650px;">
+        <div class="card-header bg-warning text-white text-center">
+            <h3 class="fw-bold mb-0"><i class="fas fa-truck"></i> Cadastro de Entregador</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{% url 'entregador:salvar_entregador' %}" class="row g-3">
+                {% csrf_token %}
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-user"></i> Usuário</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-lock"></i> Senha</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-id-card"></i> Nome Completo</label>
+                    <input type="text" name="nome" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-car"></i> Placa do Veículo</label>
+                    <input type="text" name="placa" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-coins"></i> Tipo de Preço</label>
+                    <select name="tipo_preco" class="form-select" required>
+                        <option value="">Selecione...</option>
+                        <option value="km">Por km</option>
+                        <option value="kg">Por kg</option>
+                        <option value="fixo">Fixo</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-dollar-sign"></i> Valor (R$)</label>
+                    <input type="number" name="valor" step="0.01" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-id-badge"></i> CPF</label>
+                    <input type="text" name="cpf" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-key"></i> Chave Pix</label>
+                    <input type="text" name="pix" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label"><i class="fas fa-phone"></i> Telefone</label>
+                    <input type="text" name="telefone" class="form-control" required>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">
+                        <i class="fas fa-plus-circle"></i> Cadastrar Entregador
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

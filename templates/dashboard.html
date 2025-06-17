@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if user.is_authenticated and not user.is_superuser %}
+        <h2 class="text-center text-primary fw-bold mb-4">📊 Meu Painel de Controle</h2>
+
+        <div class="row">
+            {% if user.tipo == "vendedor" or user.tipo == "comprador" %} 
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0 bg-light text-center p-3">
+                        <span class="text-muted small fw-bold">
+                            <i class="fas fa-wallet"></i> Saldo na Carteira
+                        </span>
+                        <h3 class="fw-bold text-success mt-2">R$ {{ usuario.saldo|default:0|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if user.tipo == "vendedor" %}
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0 bg-light p-3">
+                        <h6 class="text-center text-muted fw-bold">📈 Faturamento</h6>
+                        <canvas id="graficoFaturamento"></canvas>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+
+<!-- SEÇÃO PARA VENDEDORES -->
+    {% if user.tipo == "vendedor" %}
+        <h3 class="mt-5 text-primary">🐂 Meus Animais Cadastrados</h3>
+        <div class="list-group shadow-sm">
+            {% for animal in animais %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold">{{ animal.nome }}</h5>
+                        <p class="mb-0">Raça: {{ animal.raca }} | Peso: {{ animal.peso }}kg | Idade: {{ animal.idade }} anos</p>
+                        <p class="mb-0"><strong>Status:</strong> 
+                            <span class="badge {% if animal.status == 'Vendido' %} bg-danger {% else %} bg-success {% endif %}">
+                                {{ animal.status }}
+                            </span>
+                        </p>
+                    </div>
+                    {% if animal.imagem %}
+                        <img src="{{ animal.imagem.url }}" alt="Imagem do {{ animal.nome }}" width="80" class="img-thumbnail">
+                    {% else %}
+                        <span class="text-muted">📷 Sem imagem</span>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-center text-muted p-3">Você ainda não cadastrou nenhum animal.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Botão para abrir o modal de cadastro -->
+        <button class="btn btn-success mt-4 w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#cadastroModal">
+            <i class="fas fa-plus"></i> Cadastrar Novo Animal
+        </button>
+
+        <!-- MODAL PARA CADASTRO DE NOVO ANIMAL -->
+            <!-- Modal de Cadastro -->
+        <div class="modal fade" id="cadastroModal" tabindex="-1" aria-labelledby="cadastroModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content shadow-lg">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="cadastroModalLabel">📋 Cadastrar Novo Animal</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{% url 'cadastrar_animal' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Nome:</label>
+                                <input type="text" class="form-control" name="nome" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Raça:</label>
+                                <input type="text" class="form-control" name="raca" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Peso (kg):</label>
+                                <input type="number" class="form-control" step="0.01" name="peso" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Idade:</label>
+                                <input type="number" class="form-control" name="idade" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Imagem:</label>
+                                <input type="file" class="form-control" name="imagem" accept="image/*">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Data e Hora de Término do Leilão:</label>
+                                <input type="datetime-local" class="form-control" name="termino_leilao" required>
+                            </div>                            
+                            <div class="mb-3">
+                                <label class="form-label">Status:</label>
+                                <select class="form-select" name="status">
+                                    <option value="Disponível">Disponível</option>
+                                    <option value="Vendido">Vendido</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Valor Mínimo de Lance (R$):</label>
+                                <input type="number" class="form-control" name="valor_minimo" min="100" step="50" required>
+                            </div>                            
+                            <button type="submit" class="btn btn-primary w-100">Cadastrar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+
+    <!-- SEÇÃO PARA COMPRADORES -->
+    {% if user.is_authenticated and not user.is_superuser %}
+        {% if  user.tipo == "comprador" %}
+        <h3 class="mt-5 text-primary">🛒 Minhas Compras</h3>
+        <div class="list-group shadow-sm">
+            {% for compra in compras %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold">{{ compra.animal.nome }}</h5>
+                        <p class="mb-0">Raça: {{ compra.animal.raca }} | Peso: {{ compra.animal.peso }}kg</p>
+                        <p class="mb-0"><strong>Valor Pago:</strong> R$ {{ compra.valor }}</p>
+                    </div>
+                    <span class="badge bg-success">✅ Compra Finalizada</span>
+                </div>
+            {% empty %}
+                <p class="text-center text-muted p-3">Nenhuma compra realizada.</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- SEÇÃO PARA ADMINISTRADORES -->
+    {% if user.is_superuser %}
+    <h3 class="mt-5 mb-4 text-danger text-center fw-bold">🔧 Painel Administrativo</h3>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        <!-- Gerenciar Usuários -->
+        <div class="col">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                    <h5 class="card-title fw-bold">Gerenciar Usuários</h5>
+                    <p class="card-text text-muted">Visualize, ative, desative ou altere usuários cadastrados.</p>
+                    <a href="{% url 'administrador:gerenciar_usuarios' %}" class="btn btn-outline-primary w-100">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auditoria -->
+        <div class="col">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-clipboard-list fa-2x text-warning mb-2"></i>
+                    <h5 class="card-title fw-bold">Auditoria do Sistema</h5>
+                    <p class="card-text text-muted">Monitore ações realizadas pelos usuários do sistema.</p>
+                    <a href="{% url 'administrador:auditoria' %}" class="btn btn-outline-warning w-100">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="col">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                    <h5 class="card-title fw-bold">Relatórios e Estatísticas</h5>
+                    <p class="card-text text-muted">Visualize dados do sistema como vendas, usuários e lances.</p>
+                    <a href="{% url 'administrador:estatisticas' %}" class="btn btn-outline-success w-100">Acessar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if user.tipo == "entregador" %}
+    <div class="alert alert-info text-center mt-4">
+        👋 Olá, {{ user.username }}! Bem-vindo ao seu painel de entregador.
+        Escolha abaixo a ação que deseja realizar:
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4 mt-3">
+        <!-- Visualizar Entregas -->
+        <div class="col">
+            <div class="card h-100 text-center bg-light shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">📋 Visualizar Entregas</h5>
+                    <p class="card-text text-muted">Veja a lista de entregas atribuídas a você.</p>
+                    <a href="{% url 'entregador:visualizar_entregas' %}" class="btn btn-outline-primary">Visualizar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aceitar Entrega -->
+        <div class="col">
+            <div class="card h-100 text-center bg-light shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">✅ Aceitar Entrega</h5>
+                    <p class="card-text text-muted">Aceite uma nova entrega disponível.</p>
+                    <a href="{% url 'entregador:aceitar_entrega' %}" class="btn btn-outline-success">Aceitar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmar Entrega -->
+        <div class="col">
+            <div class="card h-100 text-center bg-light shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">📦 Confirmar Entrega</h5>
+                    <p class="card-text text-muted">Marque a entrega como concluída.</p>
+                    <a href="{% url 'entregador:confirmar_entrega' %}" class="btn btn-outline-warning">Confirmar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Atualizar Dados -->
+        <div class="col">
+            <div class="card h-100 text-center bg-light shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">⚙️ Atualizar Meus Dados</h5>
+                    <p class="card-text text-muted">Atualize CPF, telefone, chave Pix e placa.</p>
+                    <a href="{% url 'entregador:atualizar_dados' %}" class="btn btn-outline-dark">Atualizar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+
+</div>
+
+<!-- Script para gerar o gráfico -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var ctx = document.getElementById("graficoFaturamento").getContext("2d");
+
+        // Pegando os valores do Django e garantindo que sejam numéricos
+        let vendasRealizadas = parseFloat("{{ usuario.vendas_realizadas|default:0 }}");
+        if (isNaN(vendasRealizadas)) {
+            vendasRealizadas = 0;
+        }
+
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: ["Faturamento"],
+                datasets: [{
+                    label: "Valor (R$)",
+                    data: [vendasRealizadas],
+                    backgroundColor: "#28a745",
+                    borderColor: "#218838",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return `Faturamento: R$ ${tooltipItem.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

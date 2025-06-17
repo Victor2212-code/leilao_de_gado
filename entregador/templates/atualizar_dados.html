@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-dark text-center mb-4">⚙️ Atualizar Dados do Entregador</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label>Nome:</label>
+            <input type="text" class="form-control" name="nome" value="{{ entregador.nome }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Placa:</label>
+            <input type="text" class="form-control" name="placa" value="{{ entregador.placa }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Tipo de Preço:</label>
+            <select name="tipo_preco" class="form-select">
+                <option value="km" {% if entregador.tipo_preco == "km" %}selected{% endif %}>Por KM</option>
+                <option value="kg" {% if entregador.tipo_preco == "kg" %}selected{% endif %}>Por KG</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Valor:</label>
+            <input type="number" name="valor" class="form-control" value="{{ entregador.valor }}" required>
+        </div>
+        <div class="mb-3">
+            <label>CPF:</label>
+            <input type="text" name="cpf" class="form-control" value="{{ entregador.cpf }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Pix:</label>
+            <input type="text" name="pix" class="form-control" value="{{ entregador.pix }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Telefone:</label>
+            <input type="text" name="telefone" class="form-control" value="{{ entregador.telefone }}" required>
+        </div>
+        <button type="submit" class="btn btn-dark w-100">Atualizar Dados</button>
+    </form>
+</div>
+{% endblock %}

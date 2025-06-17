@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 85vh;">
+    <div class="card shadow-lg p-4" style="max-width: 500px; width: 100%;">
+        <div class="text-center mb-4">
+            <h3 class="fw-bold text-primary"><i class="fas fa-user-plus"></i> Cadastro de Usuário</h3>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-danger text-center" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'cadastro' %}" id="form-cadastro">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="username" class="form-label"><i class="fas fa-user"></i> Nome de Usuário</label>
+                <input type="text" name="username" id="username" class="form-control" placeholder="Digite um nome de usuário" required autofocus>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label"><i class="fas fa-envelope"></i> E-mail</label>
+                <input type="email" name="email" id="email" class="form-control" placeholder="Digite seu e-mail" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label"><i class="fas fa-lock"></i> Senha</label>
+                <input type="password" name="password" id="password" class="form-control" placeholder="Crie uma senha segura" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label"><i class="fas fa-lock"></i> Confirmar Senha</label>
+                <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Repita a senha" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="tipo_usuario" class="form-label"><i class="fas fa-user-tag"></i> Tipo de Usuário</label>
+                <select name="tipo_usuario" id="tipo_usuario" class="form-select" required>
+                    <option value="">Selecione...</option>
+                    <option value="comprador">Comprador</option>
+                    <option value="vendedor">Vendedor</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 fw-bold mt-2">
+                <i class="fas fa-user-check"></i> Cadastrar
+            </button>
+        </form>
+
+        <div class="text-center mt-3">
+            <small>Já possui uma conta? <a href="{% url 'login' %}" class="fw-bold text-primary">Faça login</a></small>
+        </div>
+    </div>
+</div>
+
+<!-- Validação de senha com JS -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("form-cadastro").addEventListener("submit", function (e) {
+            const senha = document.getElementById("password").value;
+            const confirmar = document.getElementById("confirm_password").value;
+
+            if (senha !== confirmar) {
+                e.preventDefault();
+                alert("🚫 As senhas não coincidem. Por favor, revise.");
+            }
+        });
+    });
+</script>
+{% endblock %}
